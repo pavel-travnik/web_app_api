@@ -1,4 +1,4 @@
-name: Build and deploy Node.js API to Azure Web App - moje-portfolio
+name: Deploy Python app to Azure Web App - moje-portfolio
 
 on:
   push:
@@ -7,50 +7,24 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build_and_deploy:
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          node-version: '20'
+          python-version: '3.11'
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          pip install -r requirements.txt
 
-      - name: Archive production artifacts
+      - name: Zip artifact
         run: zip -r release.zip .
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: node-app
-          path: release.zip
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
-    permissions:
-      id-token: write
-      contents: read
-
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: node-app
-
-      - name: Unzip artifact
-        run: unzip release.zip
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -62,5 +36,5 @@ jobs:
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'moje-portfolio'
-          package: '.'
+          app-name: "moje-portfolio"
+          package: "release.zip"
